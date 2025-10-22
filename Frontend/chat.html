@@ -1,30 +1,121 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>AirBot • Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="./style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
   <style>
-    body {
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; background: #0b1021; color: #e5e7eb; flex-direction: column;
-    }
-    .msg { font-size: 20px; margin-bottom: 12px; }
-    .btn { padding: 10px 16px; background: #3b82f6; color: #fff;
-           border: none; border-radius: 8px; cursor: pointer; }
+    .chat-wrap{max-width:760px;margin:4vh auto;background:#0b1222;border:1px solid #22304f;border-radius:16px;overflow:hidden}
+    .chat-head{padding:12px 16px;background:#0d1730;color:#e5e7eb;font-weight:600}
+    .chat-body{padding:16px;height:60vh;overflow:auto;background:#0a1327}
+    .msg{max-width:75%;margin:8px 0;padding:10px 12px;border-radius:12px;color:#e5e7eb}
+    .msg.user{margin-left:auto;background:#1e3a8a}
+    .msg.bot{margin-right:auto;background:#111827}
+    .chat-foot{display:flex;gap:8px;padding:12px;background:#0d1730}
+    .chat-foot input{flex:1;padding:10px;border-radius:10px;border:1px solid #22304f;background:#0a1327;color:#e5e7eb}
+    .chat-foot button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:#fff;cursor:pointer}
+    .ticket{padding:10px;border:1px solid #22304f;border-radius:10px;margin:8px 0;background:#0b1222}
+    .ticket h4{margin:0 0 6px}
+    .ticket button{margin-top:6px}
   </style>
 </head>
 <body>
-  <div class="msg">Welcome to AirBot Chat!</div>
-  <button class="btn" id="logout">Logout</button>
+  <div class="chat-wrap">
+    <div class="chat-head">AirBot Assistant</div>
+    <div id="chat" class="chat-body"></div>
+    <div class="chat-foot">
+      <input id="input" placeholder="Type here… (e.g., Cancel Trip)" />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
 
   <script>
-    // Logout button clears user info and goes back to login
-    document.getElementById("logout").addEventListener("click", () => {
-      localStorage.clear();
-      window.location.href = "./index.html";
+    const API_BASE = "http://127.0.0.1:8000";
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+
+    function toast(msg, type="info", t=2500){
+      const cont = document.getElementById("toast-container");
+      const el = document.createElement("div");
+      el.className = "toast " + (type==="success"?"success":type==="error"?"error":"info");
+      el.textContent = msg;
+      cont.appendChild(el);
+      setTimeout(()=>el.remove(), t);
+    }
+
+    function addMsg(text, who="bot"){
+      const m = document.createElement("div");
+      m.className = "msg " + (who==="user"?"user":"bot");
+      m.innerHTML = text;
+      chat.appendChild(m);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function ticketCard(t){
+      const div = document.createElement("div");
+      div.className = "ticket";
+      div.innerHTML = `
+        <h4>${t.flight_no} • ${t.src} → ${t.dst} • Seat ${t.seat_no}</h4>
+        <div>${t.flight_date} • ${t.dep_time} → ${t.arr_time}</div>
+        <div>Price: ₹${t.price}</div>
+        <button class="btn-cancel">Cancel this ticket</button>
+      `;
+      div.querySelector(".btn-cancel").addEventListener("click", async ()=>{
+        const user_id = localStorage.getItem("user_id");
+        const body = { user_id, flight_id: t.flight_id, seat_no: t.seat_no };
+        const res = await fetch(`${API_BASE}/chat/cancel/`,{
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(()=> ({}));
+        if(res.ok){
+          toast("Ticket cancelled. Refund ₹"+data.refund_amount, "success");
+          addMsg(`Cancelled ${t.flight_no} seat ${t.seat_no}. Refund ₹${data.refund_amount}.`, "bot");
+        }else{
+          toast(data.error || "Cancel failed", "error");
+        }
+      });
+      return div;
+    }
+
+    async function fetchTickets(){
+      const user_id = localStorage.getItem("user_id");
+      if(!user_id){ addMsg("Please sign in again.", "bot"); return; }
+      const res = await fetch(`${API_BASE}/chat/my-tickets/?user_id=${encodeURIComponent(user_id)}`);
+      const data = await res.json().catch(()=>({tickets:[]}));
+      if(!res.ok){ addMsg("Couldn't fetch your tickets.", "bot"); return; }
+      if(!data.tickets || data.tickets.length===0){
+        addMsg("No active bookings found for your account.", "bot"); return;
+      }
+      addMsg("Select a ticket to cancel:", "bot");
+      data.tickets.forEach(t => chat.appendChild(ticketCard(t)));
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function handleUserMessage(text){
+      addMsg(text, "user");
+      const low = text.trim().toLowerCase();
+      if(low.includes("cancel")){
+        addMsg("Fetching your booked tickets…", "bot");
+        fetchTickets();
+      }else{
+        addMsg("Try typing: <b>Cancel Trip</b>", "bot");
+      }
+    }
+
+    sendBtn.addEventListener("click", ()=> {
+      const txt = input.value.trim(); if(!txt) return;
+      input.value = ""; handleUserMessage(txt);
     });
+    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ sendBtn.click(); }});
+
+    // Greeting
+    addMsg("Hello! How may I assist you today?");
   </script>
 </body>
 </html>
