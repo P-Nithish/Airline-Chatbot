@@ -5,27 +5,13 @@
   <title>AirBot • Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="./style.css" />
-  <style>
-    .chat-wrap{max-width:760px;margin:4vh auto;background:#0b1222;border:1px solid #22304f;border-radius:16px;overflow:hidden}
-    .chat-head{padding:12px 16px;background:#0d1730;color:#e5e7eb;font-weight:600}
-    .chat-body{padding:16px;height:60vh;overflow:auto;background:#0a1327}
-    .msg{max-width:75%;margin:8px 0;padding:10px 12px;border-radius:12px;color:#e5e7eb}
-    .msg.user{margin-left:auto;background:#1e3a8a}
-    .msg.bot{margin-right:auto;background:#111827}
-    .chat-foot{display:flex;gap:8px;padding:12px;background:#0d1730}
-    .chat-foot input{flex:1;padding:10px;border-radius:10px;border:1px solid #22304f;background:#0a1327;color:#e5e7eb}
-    .chat-foot button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:#fff;cursor:pointer}
-    .ticket{padding:10px;border:1px solid #22304f;border-radius:10px;margin:8px 0;background:#0b1222}
-    .ticket h4{margin:0 0 6px}
-    .ticket button{margin-top:6px}
-  </style>
 </head>
 <body>
   <div class="chat-wrap">
     <div class="chat-head">AirBot Assistant</div>
     <div id="chat" class="chat-body"></div>
     <div class="chat-foot">
-      <input id="input" placeholder="Type here… (e.g., Cancel Trip)" />
+      <input id="input" placeholder="Type here… (e.g., Cancel Trip, Cancellation Policy)" />
       <button id="send">Send</button>
     </div>
   </div>
@@ -147,19 +133,23 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
 
-    function toast(msg, type="info", t=2500){
+    function toast(msg, type = "info", t = 2500) {
       const cont = document.getElementById("toast-container");
       const el = document.createElement("div");
-      el.className = "toast " + (type==="success"?"success":type==="error"?"error":"info");
+      el.className = "toast " + (type === "success" ? "success" : type === "error" ? "error" : "info");
       el.textContent = msg;
       cont.appendChild(el);
-      setTimeout(()=>el.remove(), t);
+      setTimeout(() => el.remove(), t);
     }
 
-    function addMsg(text, who="bot"){
+    function addMsg(text, who = "bot", isHTML = false) {
       const m = document.createElement("div");
-      m.className = "msg " + (who==="user"?"user":"bot");
-      m.innerHTML = text;
+      m.className = "msg " + (who === "user" ? "user" : "bot");
+      if (isHTML) {
+        m.innerHTML = text;
+      } else {
+        m.textContent = text;
+      }
       chat.appendChild(m);
       chat.scrollTop = chat.scrollHeight;
     }
@@ -259,75 +249,113 @@
 
 
 
-    function ticketCard(t){
+    function createTicketCard(t) {
       const div = document.createElement("div");
       div.className = "ticket";
       div.innerHTML = `
-        <h4>${t.flight_no} • ${t.src} → ${t.dst} • Seat ${t.seat_no}</h4>
-        <div>${t.flight_date} • ${t.dep_time} → ${t.arr_time}</div>
-        <div>Price: ₹${t.price}</div>
+        <h4>${t.flight_id} • ${t.src} → ${t.dst} • Seat ${t.seat_no}</h4>
+        <div>${new Date(t.dep_time).toLocaleString()} → ${new Date(t.arr_time).toLocaleString()}</div>
+        <div>Airline: ${t.airline_name}</div>
         <button class="btn-cancel">Cancel this ticket</button>
       `;
-      div.querySelector(".btn-cancel").addEventListener("click", async ()=>{
-        const user_id = localStorage.getItem("user_id");
-        const body = { user_id, flight_id: t.flight_id, seat_no: t.seat_no };
-        const res = await fetch(`${API_BASE}/chat/cancel/`,{
+      div.querySelector(".btn-cancel").addEventListener("click", async () => {
+        if (!confirm(`Cancel ticket ${t.flight_id} (PNR: ${t.pnr})?`)) return;
+        const userId = localStorage.getItem("user_id");
+        const body = { user_id: userId, flight_id: t.flight_id, seat_no: t.seat_no };
+        const res = await fetch(`${API_BASE}/chat/cancel/`, {
           method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify(body)
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         });
-        const data = await res.json().catch(()=> ({}));
-        if(res.ok){
-          toast("Ticket cancelled. Refund ₹"+data.refund_amount, "success");
-          addMsg(`Cancelled ${t.flight_no} seat ${t.seat_no}. Refund ₹${data.refund_amount}.`, "bot");
-        }else{
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          toast(`Ticket cancelled. Refund ₹${data.refund_amount}`, "success");
+          addMsg(`Cancelled ${t.flight_id} seat ${t.seat_no}. Refund ₹${data.refund_amount} by ${data.refund_date}.`, "bot");
+          div.remove();
+        } else {
           toast(data.error || "Cancel failed", "error");
         }
       });
       return div;
     }
 
-    async function fetchTickets(){
-      const user_id = localStorage.getItem("user_id");
-      if(!user_id){ addMsg("Please sign in again.", "bot"); return; }
-      const res = await fetch(`${API_BASE}/chat/my-tickets/?user_id=${encodeURIComponent(user_id)}`);
-      const data = await res.json().catch(()=>({tickets:[]}));
-      if(!res.ok){ addMsg("Couldn't fetch your tickets.", "bot"); return; }
-      if(!data.tickets || data.tickets.length===0){
-        addMsg("No active bookings found for your account.", "bot"); return;
+    async function fetchTickets(userId) {
+      const res = await fetch(`${API_BASE}/chat/my-tickets/?user_id=${encodeURIComponent(userId)}`);
+      const data = await res.json().catch(() => ({ tickets: [] }));
+      if (!res.ok) {
+        addMsg("Couldn't fetch your tickets.", "bot");
+        return [];
+      }
+      if (!data.tickets || data.tickets.length === 0) {
+        addMsg("No active bookings found for your account.", "bot");
+        return [];
       }
       addMsg("Select a ticket to cancel:", "bot");
-      data.tickets.forEach(t => chat.appendChild(ticketCard(t)));
-      chat.scrollTop = chat.scrollHeight;
+      data.tickets.forEach(t => chat.appendChild(createTicketCard(t)));
+      return data.tickets;
     }
 
-      function handleUserMessage(text){
-    addMsg(text, "user");
-    const low = text.trim().toLowerCase();
-
-    if (seatFlow.active) {
-      return proceedSeatFlow(text);
+    async function getCancellationPolicy(airline, pnr) {
+      const res = await fetch(`${API_BASE}/chat/my-tickets/?user_id=${encodeURIComponent(localStorage.getItem("user_id"))}&pnr=${pnr}`);
+      const data = await res.json().catch(() => ({ tickets: [] }));
+      const ticket = data.tickets.find(t => t.pnr === pnr);
+      if (!ticket) {
+        addMsg("Ticket not found.", "bot");
+        return;
+      }
+      const query = `cancellation policy and fees for ${ticket.airline_name}`;
+      const response = await fetch(`${API_BASE}/chat/policy/?airline=${ticket.airline_name}&query=${encodeURIComponent(query)}`, {
+        method: "GET",
+      });
+      const policyData = await response.json().catch(() => ({ policy: "Policy not available. Check with the airline." }));
+      addMsg(`<div class="policy-details">${policyData.policy}</div>`, "bot", true);
     }
 
-    if (low.includes("seat availability") || low === "seat" || low.includes("availability")) {
-      startSeatFlow();
-      return;
+    async function handleUserMessage(text) {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        addMsg("Please sign in again.", "bot");
+        return;
+      }
+
+      addMsg(text, "user");
+      const low = text.trim().toLowerCase();
+
+      if (low.includes("cancel trip")) {
+        addMsg("Fetching your booked tickets…", "bot");
+        await fetchTickets(userId);
+      } else if (low.includes("cancellation policy")) {
+        addMsg("Please provide a PNR to check the cancellation policy.", "bot");
+        const pnr = prompt("Enter PNR:");
+        if (pnr) await getCancellationPolicy(pnr);
+      } else if (low.includes("flight status")) {
+        addMsg("Please provide a PNR to check the flight status.", "bot");
+        const pnr = prompt("Enter PNR:");
+        if (pnr) {
+          const res = await fetch(`${API_BASE}/chat/my-tickets/?user_id=${userId}&pnr=${pnr}`);
+          const data = await res.json().catch(() => ({ tickets: [] }));
+          const ticket = data.tickets.find(t => t.pnr === pnr);
+          if (ticket) {
+            addMsg(`Flight ${ticket.flight_id} is ${ticket.current_status}, departing ${new Date(ticket.current_departure).toLocaleString()}.`, "bot");
+          } else {
+            addMsg("Ticket not found.", "bot");
+          }
+        }
+      } else {
+        addMsg("Try typing: <b>Cancel Trip</b>, <b>Cancellation Policy</b>, or <b>Flight Status</b>", "bot");
+      }
     }
 
-    if (low.includes("cancel")) {
-      addMsg("Fetching your booked tickets…", "bot");
-      fetchTickets();
-      return;
-    }
-
-    addMsg('Try: <b>Seat Availability</b> or <b>Cancel Trip</b>.', "bot");
-  }
-
-    sendBtn.addEventListener("click", ()=> {
-      const txt = input.value.trim(); if(!txt) return;
-      input.value = ""; handleUserMessage(txt);
+    sendBtn.addEventListener("click", () => {
+      const txt = input.value.trim();
+      if (!txt) return;
+      input.value = "";
+      handleUserMessage(txt);
     });
-    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ sendBtn.click(); }});
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendBtn.click();
+    });
 
     addMsg("Hello! How may I assist you today?");
 

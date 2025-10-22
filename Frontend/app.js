@@ -94,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tabSignup.addEventListener("click", () => setActiveTab("signup"));
   }
 });
-
   function startSeatFlow(){
     seatFlow.active = true;
     seatFlow.step = "pnr";
