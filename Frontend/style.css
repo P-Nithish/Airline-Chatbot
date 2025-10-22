@@ -1,0 +1,48 @@
+:root{
+  --bg:#0f172a; --card:#111827; --muted:#94a3b8; --fg:#e5e7eb;
+  --primary:#22c55e; --danger:#ef4444; --accent:#3b82f6;
+}
+*{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
+html,body{height:100%;margin:0;background:linear-gradient(135deg,#0b1021,#121d33)}
+.card{
+  width:100%; max-width:380px; margin:8vh auto; padding:24px 22px;
+  background:rgba(17,24,39,.8); border:1px solid rgba(255,255,255,.06);
+  border-radius:16px; color:var(--fg); box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+h1{margin:0 0 12px;font-size:24px;letter-spacing:.4px}
+.tabs{display:flex; gap:8px; margin:6px 0 14px}
+.tab{
+  flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.08);
+  background:#0b1222; color:var(--muted); cursor:pointer;
+}
+.tab.active{background:#0d1730;color:#e2e8f0;border-color:#2b3a62}
+.form{display:flex; flex-direction:column; gap:12px}
+.form.hidden{display:none}
+label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:#cbd5e1}
+input{
+  padding:10px 12px; border-radius:10px; border:1px solid #22304f;
+  background:#0a1327; color:#e5e7eb; outline:none;
+}
+input:focus{border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.btn{
+  margin-top:6px; padding:10px 12px; border:none; border-radius:10px;
+  background:linear-gradient(135deg,#2563eb,#3b82f6); color:white; cursor:pointer;
+}
+.btn:hover{filter:brightness(1.05)}
+.whoami{
+  margin-top:14px; font-size:13px; color:#cbd5e1; padding:10px 12px;
+  background:#0b1222; border:1px solid #22304f; border-radius:10px;
+}
+
+#toast-container{
+  position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:8px; z-index:9999;
+}
+.toast{
+  min-width:240px; max-width:360px; padding:10px 12px; border-radius:12px; color:white;
+  box-shadow:0 8px 24px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08);
+  animation:slideIn .2s ease-out;
+}
+.toast.success{ background:rgba(34,197,94,.95) }
+.toast.error{ background:rgba(239,68,68,.95) }
+.toast.info{ background:rgba(59,130,246,.95) }
+@keyframes slideIn{ from{ transform:translateY(8px); opacity:0 } to{ transform:translateY(0); opacity:1 } }

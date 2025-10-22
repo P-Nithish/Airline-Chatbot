@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AirBot • Auth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>AirBot</h1>
+    <div class="tabs">
+      <button id="tab-signin" class="tab active">Sign In</button>
+      <button id="tab-signup" class="tab">Sign Up</button>
+    </div>
+
+    <!-- Sign In -->
+    <form id="form-signin" class="form visible">
+      <label>
+        Username
+        <input id="si-username" type="text" autocomplete="username" required />
+      </label>
+      <label>
+        Password
+        <input id="si-password" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="btn">Sign In</button>
+    </form>
+
+    <!-- Sign Up -->
+    <form id="form-signup" class="form hidden">
+      <label>
+        Username
+        <input id="su-username" type="text" autocomplete="username" required />
+      </label>
+      <label>
+        Password
+        <input id="su-password" type="password" autocomplete="new-password" required />
+      </label>
+      <button type="submit" class="btn">Create Account</button>
+    </form>
+
+  </main>
+
+  <!-- Toasts -->
+  <div id="toast-container"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AirBot • Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    body {
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; background: #0b1021; color: #e5e7eb; flex-direction: column;
+    }
+    .msg { font-size: 20px; margin-bottom: 12px; }
+    .btn { padding: 10px 16px; background: #3b82f6; color: #fff;
+           border: none; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="msg">Welcome to AirBot Chat!</div>
+  <button class="btn" id="logout">Logout</button>
+
+  <script>
+    // Logout button clears user info and goes back to login
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "./index.html";
+    });
+  </script>
+</body>
+</html>

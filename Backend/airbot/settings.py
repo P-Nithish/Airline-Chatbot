@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers, default_methods
+
 
 load_dotenv() 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -60,7 +62,11 @@ ROOT_URLCONF = 'airbot.urls'
 
 CORS_ALLOW_ALL_ORIGINS = True 
 
-CORS_ALLOW_HEADERS = list()
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "content-type",        
+    "authorization",
+    "x-requested-with",
+]
 
 TEMPLATES = [
     {
