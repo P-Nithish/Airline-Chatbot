@@ -1,0 +1,44 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- Virtual environment ----
+.venv/
+venv/
+env/
+ENV/
+.ENV/
+Scripts/
+bin/
+Lib/
+
+# ---- Django ----
+db.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.mo
+media/
+staticfiles/
+local_settings.py
+
+# ---- Environment variables ----
+.env
+.env.*
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ---- OS Files ----
+Thumbs.db
+Desktop.ini
+
+# ---- Cache / Bytecode ----
+*.cache
+__pycache__/
