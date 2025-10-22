@@ -139,6 +139,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Mongo connection string from env
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+
+MONGO_URL = os.getenv("MONGO_URL", "mongodb+srv://nithish:nit5335@cluster.53fyj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster")
 MONGO_DB  = os.getenv("MONGO_DB", "airbot")
