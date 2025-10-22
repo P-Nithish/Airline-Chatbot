@@ -33,6 +33,115 @@
   <div id="toast-container"></div>
 
   <script>
+  const API_BASE = "http://127.0.0.1:8000";
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+
+  const seatFlow = {
+    active: false,
+    step: null,      
+    data: { pnr:"", flight_id:"", src:"", dst:"", airline_name:"" }
+  };
+
+  function addMsg(text, who="bot"){
+    const m = document.createElement("div");
+    m.className = "msg " + (who==="user"?"user":"bot");
+    m.innerHTML = text;
+    chat.appendChild(m);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function seatCard(s){
+    const d = document.createElement("div");
+    d.className = "ticket";
+    d.innerHTML = `
+      <h4>${s.airline_name || ""} ${s.flight_id || ""} • ${s.src || ""} → ${s.dst || ""}</h4>
+      <div>${s.dep_time || ""} → ${s.arr_time || ""}</div>
+      <div>Seat: <b>${s.seat_no || "-"}</b> • Status: <b>${s.Seat_status || "-"}</b></div>
+      <div>PNR: ${s.pnr || "-"}</div>
+    `;
+    return d;
+  }
+
+  const statusFlow = {
+    active: false,
+    step: null,   // 'pnr' -> 'flight_id' -> 'src' -> 'dst' -> 'airline_name' -> 'done'
+    data: { pnr:"", flight_id:"", src:"", dst:"", airline_name:"" }
+  };
+
+  function statusCard(s, source){
+    const d = document.createElement("div");
+    d.className = "ticket";
+    const header = `${s.airline_name || ""} ${s.flight_id || ""}`.trim();
+    d.innerHTML = `
+      <h4>${header || "Flight"} • ${s.src || ""} → ${s.dst || ""}</h4>
+      <div>${s.dep_time || ""} → ${s.arr_time || ""}</div>
+      <div>Current: <b>${s.current_status || "Unknown"}</b>
+      ${s.current_departure ? ` • Departs at: ${s.current_departure}` : ""}
+      ${s.current_arrival ? ` • Arrives at: ${s.current_arrival}` : ""}</div>
+      ${s.pnr ? `<div>PNR: ${s.pnr}</div>` : ""}
+      ${s.seat_no ? `<div>Seat: ${s.seat_no} ${s.Seat_status ? `(${s.Seat_status})` : ""}</div>` : ""}
+      <div style="opacity:.7;margin-top:6px;">Source: ${source}</div>
+    `;
+    return d;
+  }
+
+  async function callFlightStatusAPI(payload){
+    const res = await fetch(`${API_BASE}/chat/flight-status/`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      addMsg(data.message || data.error || "Please provide at least one field.", "bot");
+      return;
+    }
+
+    const booked = (data.from_tickets && data.from_tickets.items) || [];
+    const inventory = (data.from_available_tickets && data.from_available_tickets.items) || [];
+    const total = (data.from_tickets?.count || 0) + (data.from_available_tickets?.count || 0);
+
+    if (!total){
+      addMsg("No matching flights found.", "bot");
+      return;
+    }
+
+    addMsg(`Found <b>${total}</b> matching record${total>1?"s":""}.`, "bot");
+
+    if (booked.length){
+      addMsg("<i>From your booked tickets:</i>", "bot");
+      booked.forEach(x => chat.appendChild(statusCard(x, "tickets")));
+    }
+    if (inventory.length){
+      addMsg("<i>From available inventory:</i>", "bot");
+      inventory.forEach(x => chat.appendChild(statusCard(x, "available_tickets")));
+    }
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+
+  async function callSeatAPI(payload){
+    const res = await fetch(`${API_BASE}/chat/seat-availability/`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      addMsg(data.message || data.error || "Please provide at least one field.", "bot");
+      return;
+    }
+    if(!data.count){
+      addMsg("No matching available seats found.", "bot");
+      return;
+    }
+    addMsg(`Found <b>${data.count}</b> available seat${data.count>1?"s":""}:`, "bot");
+    (data.seats || []).forEach(s => chat.appendChild(seatCard(s)));
+    chat.scrollTop = chat.scrollHeight;
+  }
+
     const API_BASE = "http://127.0.0.1:8000";
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
@@ -54,6 +163,101 @@
       chat.appendChild(m);
       chat.scrollTop = chat.scrollHeight;
     }
+
+      function startStatusFlow(){
+    statusFlow.active = true;
+    statusFlow.step = "pnr";
+    statusFlow.data = { pnr:"", flight_id:"", src:"", dst:"", airline_name:"" };
+    addMsg(`To check flight status, you can provide any of:<br>
+      <code>{ "pnr": &lt;string&gt;, "flight_id": &lt;string&gt;, "src": &lt;string&gt;, "dst": &lt;string&gt;, "airline_name": &lt;string&gt; }</code><br>
+      I’ll ask one by one — type your reply or <b>skip</b>.`, "bot");
+    addMsg("PNR? (e.g., RWQ248) • or <b>skip</b>", "bot");
+  }
+
+  function proceedStatusFlow(userText){
+    const val = userText.trim();
+    const lower = val.toLowerCase();
+
+    if (lower === "exit"){
+      statusFlow.active = false;
+      statusFlow.step = null;
+      addMsg("Flight status flow cancelled.", "bot");
+      return;
+    }
+
+    switch(statusFlow.step){
+      case "pnr":
+        if (lower !== "skip") statusFlow.data.pnr = val.toUpperCase();
+        statusFlow.step = "flight_id";
+        addMsg("Flight ID? (e.g., LH0109) • or <b>skip</b>", "bot");
+        break;
+
+      case "flight_id":
+        if (lower !== "skip") statusFlow.data.flight_id = val.toUpperCase();
+        statusFlow.step = "src";
+        addMsg("Source airport (IATA)? (e.g., ATL) • or <b>skip</b>", "bot");
+        break;
+
+      case "src":
+        if (lower !== "skip") statusFlow.data.src = val.toUpperCase();
+        statusFlow.step = "dst";
+        addMsg("Destination airport (IATA)? (e.g., MIA) • or <b>skip</b>", "bot");
+        break;
+
+      case "dst":
+        if (lower !== "skip") statusFlow.data.dst = val.toUpperCase();
+        statusFlow.step = "airline_name";
+        addMsg("Airline name? (e.g., Lufthansa) • or <b>skip</b>", "bot");
+        break;
+
+      case "airline_name":
+        if (lower !== "skip") statusFlow.data.airline_name = val;
+        statusFlow.step = "done";
+        const payload = {};
+        Object.entries(statusFlow.data).forEach(([k,v]) => { if (v) payload[k]=v; });
+
+        if (Object.keys(payload).length === 0){
+          addMsg("Please provide at least one field. Type <b>Flight Status</b> to restart.", "bot");
+          statusFlow.active = false;
+          statusFlow.step = null;
+          return;
+        }
+
+        addMsg("Checking flight status…", "bot");
+        statusFlow.active = false;
+        statusFlow.step = null;
+        callFlightStatusAPI(payload);
+        break;
+    }
+  }
+
+    function handleUserMessage(text){
+    addMsg(text, "user");
+    const low = text.trim().toLowerCase();
+
+    if (statusFlow.active) return proceedStatusFlow(text);
+    if (seatFlow.active)   return proceedSeatFlow(text); 
+
+    if (low.includes("flight status") || low === "status" || low === "flight") {
+      startStatusFlow();
+      return;
+    }
+
+    if (low.includes("seat availability") || low.includes("availability") || low === "seat") {
+      startSeatFlow();  
+      return;
+    }
+
+    if (low.includes("cancel")) {
+      addMsg("Fetching your booked tickets…", "bot");
+      fetchTickets();
+      return;
+    }
+
+    addMsg('Try: <b>Flight Status</b>, <b>Seat Availability</b>, or <b>Cancel Trip</b>.', "bot");
+  }
+
+
 
     function ticketCard(t){
       const div = document.createElement("div");
@@ -97,16 +301,27 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function handleUserMessage(text){
-      addMsg(text, "user");
-      const low = text.trim().toLowerCase();
-      if(low.includes("cancel")){
-        addMsg("Fetching your booked tickets…", "bot");
-        fetchTickets();
-      }else{
-        addMsg("Try typing: <b>Cancel Trip</b>", "bot");
-      }
+      function handleUserMessage(text){
+    addMsg(text, "user");
+    const low = text.trim().toLowerCase();
+
+    if (seatFlow.active) {
+      return proceedSeatFlow(text);
     }
+
+    if (low.includes("seat availability") || low === "seat" || low.includes("availability")) {
+      startSeatFlow();
+      return;
+    }
+
+    if (low.includes("cancel")) {
+      addMsg("Fetching your booked tickets…", "bot");
+      fetchTickets();
+      return;
+    }
+
+    addMsg('Try: <b>Seat Availability</b> or <b>Cancel Trip</b>.', "bot");
+  }
 
     sendBtn.addEventListener("click", ()=> {
       const txt = input.value.trim(); if(!txt) return;
@@ -114,8 +329,8 @@
     });
     input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ sendBtn.click(); }});
 
-    // Greeting
     addMsg("Hello! How may I assist you today?");
+
   </script>
 </body>
 </html>
