@@ -2,6 +2,10 @@
 
 An intelligent airline chatbot application that helps users with flight bookings, cancellations, seat availability, and airline policy queries using RAG (Retrieval-Augmented Generation) technology.
 
+## Demo video:
+
+Available here: https://drive.google.com/drive/folders/1j4fe3U9w9PU-g4B0BQGtNnsVE5LfWc4I
+
 ##  Project Overview
 
 AirBot is a full-stack web application consisting of:
