@@ -6,8 +6,7 @@ import os
 from .chroma_setup import get_chroma_client
 
 load_dotenv()
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY = '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'
 
 prompt = PromptTemplate.from_template("""
 You are an airline policy assistant. Using only the provided policy context, provide a clear and concise answer.
