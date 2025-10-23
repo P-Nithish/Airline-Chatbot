@@ -2,7 +2,7 @@
 
 An intelligent airline chatbot application that helps users with flight bookings, cancellations, seat availability, and airline policy queries using RAG (Retrieval-Augmented Generation) technology.
 
-## 📋 Project Overview
+##  Project Overview
 
 AirBot is a full-stack web application consisting of:
 - **Backend**: Django REST API with LangChain/LangGraph integration for conversational AI
@@ -10,7 +10,7 @@ AirBot is a full-stack web application consisting of:
 - **AI Features**: RAG-based policy querying using ChromaDB and Groq LLM
 - **Database**: MongoDB for flight/ticket data, SQLite for Django auth
 
-## ✨ Features
+##  Features
 
 - **User Authentication**: Sign up and sign in functionality
 - **Conversational AI**: Natural language interaction for airline queries
@@ -21,7 +21,7 @@ AirBot is a full-stack web application consisting of:
 - **Policy Queries**: Ask questions about airline policies (baggage, cancellation, etc.)
 - **Real-time Chat Interface**: Interactive messaging with the AI assistant
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Backend
 - **Framework**: Django 5.2.7 with Django REST Framework
@@ -40,7 +40,7 @@ AirBot is a full-stack web application consisting of:
 - **HTML5/CSS3**
 - **Fetch API** for backend communication
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Airline-Chatbot/
@@ -63,7 +63,7 @@ Airline-Chatbot/
 └── .env                     # Environment variables
 ```
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 
@@ -175,7 +175,7 @@ mongod
 **Or use MongoDB Atlas** (cloud):
 - Update `MONGO_URL` in `.env` with your Atlas connection string
 
-## 🎯 Usage
+##  Usage
 
 ### 1. Authentication
 - Open the application in your browser
@@ -201,7 +201,7 @@ When you request seat availability, the bot will guide you through:
 
 You can skip any field by typing "skip" or provide at least one parameter.
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 ### Authentication
 - `POST /auth/signup/` - Create new user account
@@ -213,7 +213,7 @@ You can skip any field by typing "skip" or provide at least one parameter.
 - `GET /seat-availability/` - Search available seats
 - `POST /cancel-trip/` - Cancel a booking
 
-## 🧪 Testing
+##  Testing
 
 To test the application:
 
@@ -229,7 +229,7 @@ To test the application:
    - Test seat availability search
    - Test policy questions
 
-## 🔒 Security Notes
+##  Security Notes
 
 - **Never commit** the `.env` file with real API keys to version control
 - Change the `DJANGO_SECRET_KEY` in production
@@ -237,7 +237,7 @@ To test the application:
 - Use HTTPS in production
 - Implement rate limiting for API endpoints
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Backend won't start
 - Ensure all dependencies are installed: `pip install -r requirements.txt`
@@ -265,22 +265,6 @@ To test the application:
 - Frontend uses vanilla JavaScript (no build process required)
 - ChromaDB stores vector embeddings locally in `chroma_store/`
 - User sessions are stored in localStorage
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-[Add your license information here]
-
-## 👥 Authors
-
-[Add author information here]
 
 ## 🙏 Acknowledgments
 
