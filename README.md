@@ -12,23 +12,22 @@ AirBot is a full-stack web application consisting of:
 - **Backend**: Django REST API with LangChain/LangGraph integration for conversational AI
 - **Frontend**: Vanilla JavaScript SPA with authentication and chat interface
 - **AI Features**: RAG-based policy querying using ChromaDB and Groq LLM
-- **Database**: MongoDB for flight/ticket data, SQLite for Django auth
+- **Database**: MongoDB for flight/ticket data
 
 ##  Features
 
 - **User Authentication**: Sign up and sign in functionality
-- **Conversational AI**: Natural language interaction for airline queries
 - **Flight Management**: 
   - Search seat availability by PNR, Flight ID, route, or airline
   - Cancel trips
   - View booking details
 - **Policy Queries**: Ask questions about airline policies (baggage, cancellation, etc.)
-- **Real-time Chat Interface**: Interactive messaging with the AI assistant
+- **Real-time Chat Interface**: Interactive messaging
 
 ##  Tech Stack
 
 ### Backend
-- **Framework**: Django 5.2.7 with Django REST Framework
+- **Framework**:  Django and Django REST Framework
 - **AI/ML**: 
   - LangChain & LangGraph for conversational workflows
   - Groq API for LLM inference
@@ -36,11 +35,9 @@ AirBot is a full-stack web application consisting of:
   - Sentence Transformers for embeddings
 - **Databases**: 
   - MongoDB (flight/ticket data)
-  - SQLite (user authentication)
-- **Web Scraping**: Selenium, BeautifulSoup4
 
 ### Frontend
-- **Pure JavaScript** (ES6+)
+- **Pure JavaScript** 
 - **HTML5/CSS3**
 - **Fetch API** for backend communication
 
@@ -71,8 +68,8 @@ Airline-Chatbot/
 
 ### Prerequisites
 
-- **Python 3.8+**
-- **MongoDB** (local or cloud instance)
+- **Python 3.11**
+- **MongoDB** (cloud instance)
 - **Groq API Key** (for LLM access)
 
 ### Step 1: Clone the Repository
@@ -137,7 +134,7 @@ UPLOAD_DIR=./uploaded_dir
 
 5. **Start the Django development server**:
    ```bash
-   python manage.py runserver
+   python manage.py runserver 8000
    ```
 
    The backend will be available at `http://127.0.0.1:8000`
@@ -151,33 +148,15 @@ UPLOAD_DIR=./uploaded_dir
 
 2. **Serve the frontend** using any static file server:
 
-   **Option A - Using Python's built-in server**:
+   **Using Python's built-in server**:
    ```bash
-   python -m http.server 8080
+   python -m http.server 3000
    ```
 
-   **Option B - Using Node.js http-server** (if installed):
-   ```bash
-   npx http-server -p 8080
-   ```
-
-   **Option C - Using VS Code Live Server extension**:
-   - Right-click on `index.html` and select "Open with Live Server"
 
 3. **Access the application**:
-   - Open your browser and navigate to `http://localhost:8080` (or the port shown by your server)
+   - Open your browser and navigate to `http://localhost:3000` (or the port shown by your server)
 
-### Step 5: MongoDB Setup
-
-Ensure MongoDB is running:
-
-**Local MongoDB**:
-```bash
-mongod
-```
-
-**Or use MongoDB Atlas** (cloud):
-- Update `MONGO_URL` in `.env` with your Atlas connection string
 
 ##  Usage
 
@@ -203,7 +182,7 @@ When you request seat availability, the bot will guide you through:
 4. Destination airport (optional)
 5. Airline name (optional)
 
-You can skip any field by typing "skip" or provide at least one parameter.
+You should provide at least one parameter.
 
 ##  API Endpoints
 
@@ -217,29 +196,6 @@ You can skip any field by typing "skip" or provide at least one parameter.
 - `GET /seat-availability/` - Search available seats
 - `POST /cancel-trip/` - Cancel a booking
 
-##  Testing
-
-To test the application:
-
-1. **Backend API tests**:
-   ```bash
-   cd Backend
-   python manage.py test
-   ```
-
-2. **Manual testing**:
-   - Create a test user account
-   - Try various chat queries
-   - Test seat availability search
-   - Test policy questions
-
-##  Security Notes
-
-- **Never commit** the `.env` file with real API keys to version control
-- Change the `DJANGO_SECRET_KEY` in production
-- Set `DEBUG=0` in production environments
-- Use HTTPS in production
-- Implement rate limiting for API endpoints
 
 ##  Troubleshooting
 
