@@ -5,6 +5,79 @@ from rest_framework import status
 from datetime import datetime
 from .mongo import tickets, available_tickets
 
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+import asyncio
+import logging
+from .rag.policy_rag_agent import PolicyRAGAgent
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def ask_policy(request):
+    """
+    API endpoint to query airline policies using RAG.
+    
+    POST /ask-policy/
+    Body: {"question": "What is the baggage allowance?"}
+    
+    Returns: {
+        "answer": "...",
+        "sources": ["source1", "source2"]
+    }
+    """
+    if request.method == "POST":
+        try:
+            # Parse request body
+            body = json.loads(request.body)
+            question = body.get("question", "").strip()
+            
+            # Validate input
+            if not question:
+                return JsonResponse({
+                    "error": "Question is required",
+                    "message": "Please provide a 'question' field in the request body"
+                }, status=400)
+            
+            # Log the question
+            logger.info(f"Received question: {question}")
+            
+            # Query the RAG agent
+            agent = PolicyRAGAgent()
+            result = asyncio.run(agent.query(question))
+            
+            # Log the response
+            logger.info(f"Generated answer with {len(result.get('sources', []))} sources")
+            
+            return JsonResponse({
+                "success": True,
+                "question": question,
+                "answer": result.get("answer", ""),
+                "sources": result.get("sources", [])
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                "error": "Invalid JSON",
+                "message": "Request body must be valid JSON"
+            }, status=400)
+            
+        except Exception as e:
+            logger.error(f"Error processing question: {str(e)}", exc_info=True)
+            return JsonResponse({
+                "error": "Internal server error",
+                "message": str(e)
+            }, status=500)
+    
+    # Handle non-POST requests
+    return JsonResponse({
+        "error": "Method not allowed",
+        "message": "Only POST method is allowed. Send a POST request with JSON body containing 'question' field."
+    }, status=405)
+
+
 @api_view(["GET"])
 def my_tickets(request):
     user_id = request.GET.get("user_id")
